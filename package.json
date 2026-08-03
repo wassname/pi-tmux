@@ -1,0 +1,22 @@
+{
+  "name": "pi-agent-status-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Monorepo for Pi agent status extensions (tmux, Zed, Orca, Herdr)",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "sync": "node scripts/sync-core.mjs",
+    "check": "node scripts/sync-core.mjs && tsc --build --force",
+    "test": "node scripts/sync-core.mjs && node --test --experimental-strip-types \"packages/*/test/*.test.ts\"",
+    "release": "node scripts/publish.mjs"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-ai": "^0.74.0",
+    "@earendil-works/pi-coding-agent": "^0.74.0",
+    "@types/node": "^25.0.10",
+    "typescript": "^5.9.0"
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "name": "pi-herdr",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Herdr tab spinner, completion mark, and AI-generated tab labels for the Pi coding agent",
+  "keywords": [
+    "pi-package",
+    "pi",
+    "pi-coding-agent",
+    "pi-extension",
+    "herdr",
+    "spinner",
+    "notification",
+    "status",
+    "terminal",
+    "ai"
+  ],
+  "license": "MIT",
+  "author": "yukikiy",
+  "homepage": "https://github.com/yukikiy/pi-agent-status/tree/main/packages/pi-herdr",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yukikiy/pi-agent-status.git",
+    "directory": "packages/pi-herdr"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "files": [
+    "index.ts",
+    "settings.ts",
+    "herdr-client.ts",
+    "core/**/*.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "peerDependencies": {
+    "@earendil-works/pi-ai": "^0.74.0",
+    "@earendil-works/pi-coding-agent": "^0.74.0"
+  }
+}
