@@ -1,48 +1,29 @@
 import type { ExtensionAPI, ExtensionCommandContext, ExtensionContext } from "@earendil-works/pi-coding-agent";
-import { basename, join } from "node:path";
+import { basename } from "node:path";
 
 import {
   compactTitle,
+  createCompletionAlert,
   createSettingsCommand,
   createTitleController,
   getFirstUserPrompt,
   isMainAgentSession,
   type AnyContext,
 } from "./core/index.ts";
+import { createPiOrcaRuntime } from "./orca-runtime.ts";
 import { loadSettings, saveSettings, type PiOrcaSettings } from "./settings.ts";
 
-const ORCA_RENAME_TIMEOUT_MS = 5_000;
-
-function getOrcaCliCommand(): string {
-  if (process.env.ORCA_CLI_PATH) return process.env.ORCA_CLI_PATH;
-  if (process.platform === "win32" && process.env.LOCALAPPDATA) {
-    return join(process.env.LOCALAPPDATA, "Programs", "orca", "resources", "bin", "orca.exe");
-  }
-  return "orca";
-}
-
 export default function piOrcaExtension(pi: ExtensionAPI) {
-  if (!process.env.ORCA_PANE_KEY) return;
+  const orca = createPiOrcaRuntime(pi);
+  if (!orca.isAvailable()) return;
 
+  const terminalHandle = orca.terminalHandle();
   let settings: PiOrcaSettings = loadSettings();
 
   // Orca normalises Pi's OSC title to "Pi" for its own status display, so the tab
   // label has to be set through the CLI to survive.
-  const renameOrcaTab = async (title: string): Promise<boolean> => {
-    const terminalHandle = process.env.ORCA_TERMINAL_HANDLE;
-    if (!terminalHandle) return false;
-
-    try {
-      const result = await pi.exec(
-        getOrcaCliCommand(),
-        ["terminal", "rename", "--terminal", terminalHandle, "--title", title, "--json"],
-        { timeout: ORCA_RENAME_TIMEOUT_MS },
-      );
-      return result.code === 0;
-    } catch {
-      return false;
-    }
-  };
+  const renameOrcaTab = async (title: string): Promise<boolean> =>
+    terminalHandle ? orca.setName(terminalHandle, title) : false;
 
   const applyFallbackTabTitle = (ctx: AnyContext, title: string): void => {
     if (!ctx.hasUI) return;
@@ -70,6 +51,22 @@ export default function piOrcaExtension(pi: ExtensionAPI) {
     name: "pi-orca",
     save: () => saveSettings(settings),
     specs: [
+      {
+        key: "alert",
+        type: "boolean",
+        get: () => settings.completionAlert.enabled,
+        set: (value) => {
+          settings.completionAlert.enabled = value;
+        },
+      },
+      {
+        key: "mark",
+        type: "string",
+        get: () => settings.completionAlert.mark,
+        set: (value) => {
+          settings.completionAlert.mark = value;
+        },
+      },
       {
         key: "naming",
         type: "boolean",
@@ -103,7 +100,7 @@ export default function piOrcaExtension(pi: ExtensionAPI) {
   });
 
   pi.registerCommand("pi-orca", {
-    description: "Configure Orca tab title naming",
+    description: "Configure the Orca completion mark and tab title naming",
     handler: settingsCommand,
   });
 
@@ -112,6 +109,7 @@ export default function piOrcaExtension(pi: ExtensionAPI) {
 
     title.reset();
     settings = loadSettings();
+    orca.refresh();
     await title.restoreExistingTitle(ctx);
   });
 
@@ -120,5 +118,34 @@ export default function piOrcaExtension(pi: ExtensionAPI) {
 
     const firstPrompt = getFirstUserPrompt(ctx.sessionManager.getBranch()) ?? event.prompt;
     void title.applyAutoTitle(firstPrompt, ctx);
+  });
+
+  pi.on("agent_start", async (_event, ctx) => {
+    if (!isMainAgentSession(ctx) || !terminalHandle) return;
+
+    orca.refresh();
+    const alert = createCompletionAlert(orca, {
+      enabled: settings.completionAlert.enabled,
+      bellEnabled: false,
+      mark: settings.completionAlert.mark,
+      ringBell: () => {},
+    });
+    await alert.prepareForAgentStart(terminalHandle);
+  });
+
+  pi.on("agent_end", async (_event, ctx) => {
+    if (!isMainAgentSession(ctx) || !terminalHandle) return;
+
+    orca.refresh();
+    const alert = createCompletionAlert(orca, {
+      enabled: settings.completionAlert.enabled,
+      bellEnabled: false,
+      focusedMarkAutoClearMs: settings.completionAlert.focusedMarkAutoClearMs,
+      markWatchIntervalMs: settings.completionAlert.markWatchIntervalMs,
+      markWatchMaxMs: settings.completionAlert.markWatchMaxMs,
+      mark: settings.completionAlert.mark,
+      ringBell: () => {},
+    });
+    await alert.notifyAgentEnd(terminalHandle);
   });
 }

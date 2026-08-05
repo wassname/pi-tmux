@@ -10,11 +10,11 @@ Each host gets its own package, so you install exactly one and it configures its
 | --- | --- | --- | --- | --- | --- |
 | [`pi-tmux`](packages/pi-tmux) | tmux | tmux window name | 🔔 on the window name | bundled sound via `mpv` | ✅ |
 | [`pi-zed-plugin`](packages/pi-zed-plugin) | Zed terminal | terminal tab title | Zed's own notification | Zed's own notification | ✅ |
-| [`pi-orca`](packages/pi-orca) | Orca | built into Orca | built into Orca | built into Orca | ✅ |
+| [`pi-orca`](packages/pi-orca) | Orca | built into Orca | 🔔 on the tab title | built into Orca | ✅ |
 | [`pi-herdr`](packages/pi-herdr) | Herdr | tab label | 🔔 on the tab label | built into Herdr | ✅ |
 
-Only the gaps a host leaves open are filled in. Nothing is duplicated on top of what the host
-already does.
+Built-in host behaviour is reused where it fits, and each package adds the remaining status cues
+without replacing it.
 
 ## Install
 

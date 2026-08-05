@@ -1,10 +1,13 @@
 # pi-orca
 
-AI-generated Orca tab titles for the [Pi coding agent](https://pi.dev).
+Completion marks and AI-generated Orca tab titles for the [Pi coding agent](https://pi.dev).
 
-Orca already shows its own spinner and completion state, but every Pi tab is still labelled `Pi`.
-This extension names each tab after what the session is actually doing, so `Pi` becomes
-`Fix OAuth callback`.
+Orca already shows its own spinner and plays its own completion sound, but every Pi tab is still
+labelled `Pi`. This extension names each tab after what the session is actually doing, so `Pi`
+becomes `Fix OAuth callback`, and prefixes it with `🔔` when the agent finishes.
+
+The mark clears automatically after you select the tab, or when the agent starts working again.
+No extra completion sound is played.
 
 ## Install
 
@@ -24,6 +27,8 @@ through the Orca CLI. When the CLI is unavailable the extension falls back to th
 /rename Fix OAuth callback  set the tab title explicitly
 
 /pi-orca                    show current settings
+/pi-orca alert off          turn the completion mark off
+/pi-orca mark ✅            change the completion mark
 /pi-orca naming off         turn AI titles off
 /pi-orca max-chars 40       change the title length limit
 /pi-orca naming-model openai/gpt-5-mini
