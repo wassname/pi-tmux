@@ -88,6 +88,51 @@ function containsActiveTab(value: unknown, tabId: string): boolean {
   return Object.values(object).some((item) => containsActiveTab(item, tabId));
 }
 
+function findVisualTab(value: unknown, tabId: string): Record<string, unknown> | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const tab = findVisualTab(item, tabId);
+      if (tab) return tab;
+    }
+    return undefined;
+  }
+
+  const object = value as Record<string, unknown>;
+  if (Array.isArray(object.tabs)) {
+    for (const candidate of object.tabs) {
+      if (
+        candidate &&
+        typeof candidate === "object" &&
+        (candidate as Record<string, unknown>).tabId === tabId
+      ) {
+        return candidate as Record<string, unknown>;
+      }
+    }
+  }
+
+  for (const item of Object.values(object)) {
+    const tab = findVisualTab(item, tabId);
+    if (tab) return tab;
+  }
+  return undefined;
+}
+
+function findTerminal(snapshot: TerminalSnapshot | undefined, target: string) {
+  return snapshot?.terminals.find((terminal) => terminal.handle === target);
+}
+
+function findTabName(snapshot: TerminalSnapshot | undefined, target: string): string | undefined {
+  const terminal = findTerminal(snapshot, target);
+  if (!terminal?.tabId || !terminal.worktreeId) return undefined;
+
+  const layout = snapshot?.visualLayouts.find(
+    (candidate) => candidate.worktreeId === terminal.worktreeId,
+  );
+  const title = findVisualTab(layout?.root, terminal.tabId)?.title;
+  return typeof title === "string" ? title : undefined;
+}
+
 export function createOrcaRuntime(
   exec: OrcaExec,
   env: NodeJS.ProcessEnv = process.env,
@@ -140,15 +185,14 @@ export function createOrcaRuntime(
 
     cachedSnapshot = { value: snapshot, capturedAt: Date.now() };
     for (const terminal of snapshot.terminals) {
-      if (terminal.handle && typeof terminal.title === "string") {
-        lastKnownNames.set(terminal.handle, terminal.title);
+      if (!terminal.handle) continue;
+      const tabName = findTabName(snapshot, terminal.handle);
+      if (tabName !== undefined) {
+        lastKnownNames.set(terminal.handle, tabName);
       }
     }
     return snapshot;
   };
-
-  const findTerminal = (snapshot: TerminalSnapshot | undefined, target: string) =>
-    snapshot?.terminals.find((terminal) => terminal.handle === target);
 
   return {
     isAvailable(): boolean {
@@ -160,10 +204,8 @@ export function createOrcaRuntime(
     },
 
     async getName(target: string): Promise<string> {
-      const terminal = findTerminal(await loadSnapshot(), target);
-      return typeof terminal?.title === "string"
-        ? terminal.title
-        : (lastKnownNames.get(target) ?? "");
+      const tabName = findTabName(await loadSnapshot(), target);
+      return tabName ?? lastKnownNames.get(target) ?? "";
     },
 
     async setName(target: string, name: string): Promise<boolean> {
@@ -179,8 +221,15 @@ export function createOrcaRuntime(
       if (result.code !== 0) return false;
 
       lastKnownNames.set(target, name);
-      const terminal = findTerminal(cachedSnapshot?.value, target);
-      if (terminal) terminal.title = name;
+      const snapshot = cachedSnapshot?.value;
+      const terminal = findTerminal(snapshot, target);
+      if (terminal?.tabId && terminal.worktreeId) {
+        const layout = snapshot?.visualLayouts.find(
+          (candidate) => candidate.worktreeId === terminal.worktreeId,
+        );
+        const tab = findVisualTab(layout?.root, terminal.tabId);
+        if (tab) tab.title = name;
+      }
       return true;
     },
 

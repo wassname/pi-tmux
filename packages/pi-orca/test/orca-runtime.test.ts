@@ -3,7 +3,11 @@ import test from "node:test";
 
 import { createOrcaRuntime, type OrcaExec } from "../orca-runtime.ts";
 
-function terminalListResponse(activeTabId = "tab-1", title = "Fix OAuth callback"): string {
+function terminalListResponse(
+  activeTabId = "tab-1",
+  tabTitle = "Fix OAuth callback",
+  paneTitle = tabTitle,
+): string {
   return JSON.stringify({
     ok: true,
     result: {
@@ -12,7 +16,7 @@ function terminalListResponse(activeTabId = "tab-1", title = "Fix OAuth callback
           handle: "term-1",
           worktreeId: "worktree-1",
           tabId: "tab-1",
-          title,
+          title: paneTitle,
         },
       ],
       visualLayouts: [
@@ -21,7 +25,10 @@ function terminalListResponse(activeTabId = "tab-1", title = "Fix OAuth callback
           root: {
             type: "group",
             activeTabId,
-            tabs: [{ tabId: "tab-1" }, { tabId: "tab-2" }],
+            tabs: [
+              { tabId: "tab-1", title: tabTitle },
+              { tabId: "tab-2", title: "Other task" },
+            ],
           },
         },
       ],
@@ -44,6 +51,23 @@ test("the current Orca tab title and visibility come from one cached terminal li
   assert.equal(await orca.getName("term-1"), "Fix OAuth callback");
   assert.equal(await orca.isTargetVisible("term-1"), true);
   assert.deepEqual(calls, [["terminal", "list", "--limit", "1000", "--json"]]);
+});
+
+test("Orca's working spinner in the pane title is excluded from the tab name", async () => {
+  const calls: string[][] = [];
+  const exec: OrcaExec = async (_command, args) => {
+    calls.push(args);
+    return {
+      code: 0,
+      stdout: terminalListResponse("tab-1", "Fix OAuth callback", "⠼ Pi"),
+    };
+  };
+  const orca = createOrcaRuntime(exec, { ORCA_PANE_KEY: "pane-1" });
+
+  assert.equal(await orca.getName("term-1"), "Fix OAuth callback");
+  assert.equal(await orca.setName("term-1", "🔔 Fix OAuth callback"), true);
+  assert.equal(await orca.getName("term-1"), "🔔 Fix OAuth callback");
+  assert.equal(calls.length, 2);
 });
 
 test("newer Orca versions are retried with the visual layouts flag", async () => {
