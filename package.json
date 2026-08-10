@@ -14,8 +14,8 @@
     "release": "node scripts/publish.mjs"
   },
   "devDependencies": {
-    "@earendil-works/pi-ai": "^0.74.0",
-    "@earendil-works/pi-coding-agent": "^0.74.0",
+    "@earendil-works/pi-ai": "^0.83.0",
+    "@earendil-works/pi-coding-agent": "^0.83.0",
     "@types/node": "^25.0.10",
     "typescript": "^5.9.0"
   }

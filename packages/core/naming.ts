@@ -1,4 +1,5 @@
-import { completeSimple, type ThinkingLevel, type UserMessage } from "@earendil-works/pi-ai";
+import type { ThinkingLevel, UserMessage } from "@earendil-works/pi-ai";
+import { completeSimple } from "@earendil-works/pi-ai/compat";
 import type { ExtensionContext, SessionEntry } from "@earendil-works/pi-coding-agent";
 
 const REQUEST_TIMEOUT_MS = 30_000;
@@ -27,7 +28,7 @@ export type RenameFailureReason =
 
 export type GenerateTitleResult =
   | { ok: true; title: string }
-  | { ok: false; reason: Exclude<RenameFailureReason, "skipped" | "stale_session"> };
+  | { ok: false; reason: Exclude<RenameFailureReason, "skipped" | "stale_session">; detail?: string };
 
 const TITLE_PROMPT = `You name coding sessions.
 
@@ -174,9 +175,13 @@ export async function generateTitle(
     return { ok: false, reason: "missing_model" };
   }
 
+  // Extension-registered providers (e.g. claude-bridge) stream through their own
+  // implementation; pi-ai's global completeSimple only knows the builtin apis.
+  const providerStream = ctx.modelRegistry.getRegisteredProviderConfig(model.provider)?.streamSimple;
+
   const auth = await ctx.modelRegistry.getApiKeyAndHeaders(model);
-  if (!auth.ok) {
-    return { ok: false, reason: "missing_auth" };
+  if (!auth.ok && !providerStream) {
+    return { ok: false, reason: "missing_auth", detail: auth.error };
   }
 
   const message: UserMessage = {
@@ -188,24 +193,22 @@ export async function generateTitle(
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
+  const request = { systemPrompt: TITLE_PROMPT, messages: [message] };
+  const options = {
+    apiKey: auth.ok ? auth.apiKey : undefined,
+    headers: auth.ok ? auth.headers : undefined,
+    maxTokens: 64,
+    reasoning: normalizeThinkingLevel(config.thinking),
+    signal: controller.signal,
+  };
+
   let response;
   try {
-    response = await completeSimple(
-      model,
-      {
-        systemPrompt: TITLE_PROMPT,
-        messages: [message],
-      },
-      {
-        apiKey: auth.apiKey,
-        headers: auth.headers,
-        maxTokens: 64,
-        reasoning: normalizeThinkingLevel(config.thinking),
-        signal: controller.signal,
-      },
-    );
-  } catch {
-    return { ok: false, reason: "request_failed" };
+    response = providerStream
+      ? await providerStream(model, request, options).result()
+      : await completeSimple(model, request, options);
+  } catch (error) {
+    return { ok: false, reason: "request_failed", detail: describeError(error) };
   } finally {
     clearTimeout(timeoutId);
   }
@@ -235,7 +238,17 @@ function resolveNamingModel(ctx: ExtensionContext, modelSpec: string) {
   return ctx.modelRegistry.find(parsed.provider, parsed.modelId) ?? ctx.model;
 }
 
-export function describeRenameFailure(reason: RenameFailureReason): string {
+function describeError(error: unknown): string | undefined {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return message.trim() || undefined;
+}
+
+export function describeRenameFailure(reason: RenameFailureReason, detail?: string): string {
+  const summary = renameFailureSummary(reason);
+  return detail ? `${summary} (${detail})` : summary;
+}
+
+function renameFailureSummary(reason: RenameFailureReason): string {
   switch (reason) {
     case "missing_prompt":
       return "No user or assistant text found in the current branch.";

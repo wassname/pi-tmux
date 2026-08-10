@@ -16,7 +16,9 @@ import {
 
 export type AnyContext = ExtensionContext | ExtensionCommandContext;
 
-export type RenameResult = { ok: true; title: string } | { ok: false; reason: RenameFailureReason };
+export type RenameResult =
+  | { ok: true; title: string }
+  | { ok: false; reason: RenameFailureReason; detail?: string };
 
 export type TitleControllerOptions = {
   pi: ExtensionAPI;
@@ -148,7 +150,7 @@ export function createTitleController(options: TitleControllerOptions) {
       const result = await runRename(conversation, "conversation", ctx, true);
 
       if (!result.ok) {
-        notify(ctx, describeRenameFailure(result.reason), "error");
+        notify(ctx, describeRenameFailure(result.reason, result.detail), "error");
         return;
       }
 
