@@ -2,8 +2,8 @@ import type { ExtensionAPI, ExtensionCommandContext, ExtensionContext } from "@e
 import { basename } from "node:path";
 
 import {
-  compactTitle,
   createCompletionAlert,
+  sanitizeTitle,
   createNamedTargetSpinner,
   createSettingsCommand,
   createTerminalTitleRuntime,
@@ -101,7 +101,7 @@ export default function piTmuxExtension(pi: ExtensionAPI) {
     pi,
     getNaming: () => settings.naming,
     async applyTitle(rawTitle) {
-      const normalized = compactTitle(rawTitle, settings.naming.maxChars);
+      const normalized = sanitizeTitle(rawTitle).trim();
       if (!normalized) return undefined;
 
       await stopWindowSpinner();

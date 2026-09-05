@@ -5,15 +5,21 @@ import { createTitleController } from "../title-controller.ts";
 
 const NAMING_CONFIG = { enabled: true, model: "", thinking: "low", maxChars: 24 };
 
-test("a native Pi name is preserved without the automatic title length limit", () => {
+test("a native Pi name is preserved without the automatic title length limit", async () => {
+  const applied: string[] = [];
   const title = createTitleController({
-    pi: {} as never,
-    getNaming: () => NAMING_CONFIG,
-    applyTitle: () => undefined,
+    pi: { getSessionName: () => "manual_name_that_is_deliberately_long" } as never,
+    getNaming: () => ({ ...NAMING_CONFIG, enabled: false }),
+    applyTitle: (value) => {
+      applied.push(value);
+      return value;
+    },
   });
 
   assert.equal(title.observeSessionName("manual_name_that_is_deliberately_long"), "manual_name_that_is_deliberately_long");
   assert.equal(title.observeSessionName(undefined), undefined);
+  assert.equal(await title.restoreExistingTitle({} as never), true);
+  assert.deepEqual(applied, ["manual_name_that_is_deliberately_long"]);
 });
 
 test("a native Pi name cancels an in-flight automatic title", async () => {

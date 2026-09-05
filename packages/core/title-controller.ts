@@ -115,13 +115,10 @@ export function createTitleController(options: TitleControllerOptions) {
     },
 
     async restoreExistingTitle(ctx: AnyContext): Promise<boolean> {
-      const naming = options.getNaming();
-      if (!naming.enabled) return false;
-
       const existing = options.pi.getSessionName();
       if (!existing) return false;
 
-      const restored = compactTitle(existing, naming.maxChars);
+      const restored = sanitizeTitle(existing).trim();
       if (!restored) return false;
 
       return !!(await persistTitle(restored, ctx));
