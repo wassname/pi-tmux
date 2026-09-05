@@ -8,6 +8,7 @@ import {
   buildConversationNamingSource,
   compactTitle,
   describeRenameFailure,
+  sanitizeTitle,
   generateTitle,
   type NamingConfig,
   type NamingSource,
@@ -104,7 +105,15 @@ export function createTitleController(options: TitleControllerOptions) {
       renameInFlight = null;
     },
 
-    /** Reapply the name a resumed session already has instead of generating a new one. */
+    observeSessionName(name: string | undefined): string | undefined {
+      sessionEpoch += 1;
+      hasAttemptedTitleForSession = true;
+
+      const title = sanitizeTitle(name ?? "").trim() || undefined;
+      hasTitleForSession = title !== undefined;
+      return title;
+    },
+
     async restoreExistingTitle(ctx: AnyContext): Promise<boolean> {
       const naming = options.getNaming();
       if (!naming.enabled) return false;

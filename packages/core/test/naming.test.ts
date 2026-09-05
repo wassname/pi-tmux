@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  boundNamingSource,
   compactTitle,
   describeRenameFailure,
   generateTitle,
@@ -52,12 +53,21 @@ test("a title within the limit is kept as is", () => {
 });
 
 test("a title over the limit is truncated", () => {
-  assert.equal(compactTitle("あ".repeat(40)), "あ".repeat(32));
+  assert.equal(compactTitle("あ".repeat(40)), "あ".repeat(24));
   assert.equal(compactTitle("あ".repeat(40), 20), "あ".repeat(20));
 });
 
 test("a title that sanitizes to nothing is undefined", () => {
   assert.equal(compactTitle('  "" \n '), undefined);
+});
+
+test("bound naming source retains the end of a pasted prompt", () => {
+  const request = "find_pi_extensions";
+  const source = `${"a".repeat(7_000)}${request}`;
+  const bounded = boundNamingSource(source);
+
+  assert.ok(bounded.length <= 4_000);
+  assert.ok(bounded.includes(request));
 });
 
 test("an extension-registered provider streams the title itself", async () => {

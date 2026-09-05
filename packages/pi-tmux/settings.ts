@@ -36,9 +36,9 @@ export type PiTmuxSettings = {
 
 export const DEFAULT_SETTINGS: PiTmuxSettings = {
   spinner: { ...DEFAULT_SPINNER },
-  completionAlert: { ...DEFAULT_COMPLETION_ALERT, hookEnabled: true },
+  completionAlert: { ...DEFAULT_COMPLETION_ALERT, hookEnabled: false },
   sound: {
-    enabled: true,
+    enabled: false,
     command: "mpv",
     args: ["--no-video", "--really-quiet", DEFAULT_NOTIFICATION_SOUND],
   },

@@ -5,7 +5,7 @@ import type { ExtensionContext, SessionEntry } from "@earendil-works/pi-coding-a
 const REQUEST_TIMEOUT_MS = 30_000;
 const NAMING_SOURCE_CHAR_MAX = 4000;
 
-export const DEFAULT_TITLE_MAX_CHARS = 32;
+export const DEFAULT_TITLE_MAX_CHARS = 24;
 
 export type NamingSource = "user_message" | "conversation";
 
@@ -33,16 +33,17 @@ export type GenerateTitleResult =
 const TITLE_PROMPT = `You name coding sessions.
 
 Reply with exactly one line:
-TITLE: <short title>
+TITLE: <work_id>
 
 Rules:
-- Write the title in the same language the user wrote in.
-- Describe the concrete task, not the tooling.
-- Keep it short enough to fit a terminal tab label.
-- No quotes, no punctuation at the end, no emoji, no markdown, no extra labels or explanation.
+- Use a terse lowercase work identifier: two to four ASCII terms joined by underscores.
+- Describe the concrete task, not the tooling or conversation.
+- Prefer a verb and object; omit articles and filler words.
+- No quotes, punctuation, emoji, markdown, or explanation.
 
-Example:
-TITLE: Fix OAuth callback`;
+Examples:
+TITLE: fix_oauth_callback
+TITLE: search_pi_extensions`;
 
 export function sanitizeTitle(value: string): string {
   return value
@@ -138,11 +139,21 @@ export function buildConversationNamingSource(entries: SessionEntry[]): string |
   return conversation || undefined;
 }
 
+export function boundNamingSource(seed: string): string {
+  const content = seed.trim();
+  if (content.length <= NAMING_SOURCE_CHAR_MAX) return content;
+
+  const marker = "\n\n[earlier content omitted]\n\n";
+  const headLength = 1_500;
+  const tailLength = NAMING_SOURCE_CHAR_MAX - headLength - marker.length;
+  return `${content.slice(0, headLength)}${marker}${content.slice(-tailLength)}`;
+}
+
 function formatNamingPrompt(seed: string, source: NamingSource): string {
   const tag = source === "conversation" ? "conversation" : "user_message";
-  const content = seed.trim().slice(0, NAMING_SOURCE_CHAR_MAX);
+  const content = boundNamingSource(seed);
 
-  return `<${tag}>\n${content}\n</${tag}>\n\nReply with:\nTITLE: <short title>`;
+  return `<${tag}>\n${content}\n</${tag}>\n\nReply with:\nTITLE: <work_id>`;
 }
 
 function parseModelSpec(modelSpec: string): { provider: string; modelId: string } | undefined {

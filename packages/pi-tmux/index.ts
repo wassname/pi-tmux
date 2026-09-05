@@ -9,7 +9,6 @@ import {
   createTerminalTitleRuntime,
   createTitleController,
   getFirstUserPrompt,
-  installTitleSuffixStripper,
   isMainAgentSession,
   setTerminalTitle,
   SPINNER_SPEEDS,
@@ -105,6 +104,7 @@ export default function piTmuxExtension(pi: ExtensionAPI) {
       const normalized = compactTitle(rawTitle, settings.naming.maxChars);
       if (!normalized) return undefined;
 
+      await stopWindowSpinner();
       pi.setSessionName(normalized);
       setTerminalTitle(normalized);
 
@@ -115,6 +115,22 @@ export default function piTmuxExtension(pi: ExtensionAPI) {
 
       return normalized;
     },
+  });
+
+  pi.on("session_info_changed", async (event, ctx) => {
+    if (!isMainAgentSession(ctx) || typeof event.name !== "string") return;
+
+    const name = title.observeSessionName(event.name);
+    const fallback = basename(ctx.sessionManager.getCwd()) || "pi";
+    const windowTitle = name ?? fallback;
+
+    await stopWindowSpinner();
+    setTerminalTitle(windowTitle);
+
+    const target = await captureWindowId();
+    if (target) {
+      await tmux.setName(target, windowTitle);
+    }
   });
 
   const settingsCommand = createSettingsCommand({
@@ -223,8 +239,6 @@ export default function piTmuxExtension(pi: ExtensionAPI) {
 
   pi.on("session_start", async (_event, ctx) => {
     if (!isMainAgentSession(ctx)) return;
-
-    installTitleSuffixStripper(basename(ctx.sessionManager.getCwd()));
 
     await stopWindowSpinner();
     await stopActivityMonitor();

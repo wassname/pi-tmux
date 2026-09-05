@@ -47,7 +47,7 @@ export function createTitleSpinner(runtime: TitleSpinnerRuntime, config: Spinner
   let timer: ReturnType<typeof setTimeout> | null = null;
   let frameIndex = 0;
   let running = false;
-  let lastFrame: string | null = null;
+  let baseTitle = "";
   let activeTargetId: string | undefined;
   let tickInFlight: Promise<void> | null = null;
   let stopInFlight: Promise<void> | null = null;
@@ -67,12 +67,7 @@ export function createTitleSpinner(runtime: TitleSpinnerRuntime, config: Spinner
     const frame = frames[frameIndex % frames.length] ?? "·";
     frameIndex += 1;
 
-    const current = await runtime.getTitle(targetId);
-    if (!running || activeTargetId !== targetId) return;
-
-    const base = stripSpinnerPrefix(current, lastFrame);
-    await runtime.setTitle(targetId, `${frame} ${base}`);
-    lastFrame = frame;
+    await runtime.setTitle(targetId, `${frame} ${baseTitle}`.trim());
 
     if (running && activeTargetId === targetId) {
       scheduleTick();
@@ -102,12 +97,10 @@ export function createTitleSpinner(runtime: TitleSpinnerRuntime, config: Spinner
 
     activeTargetId = undefined;
     frameIndex = 0;
-    const frameToStrip = lastFrame;
-    lastFrame = null;
 
-    if (!targetId || !frameToStrip) return;
-    const current = await runtime.getTitle(targetId);
-    await runtime.setTitle(targetId, stripSpinnerPrefix(current, frameToStrip));
+    if (!targetId) return;
+    await runtime.setTitle(targetId, baseTitle);
+    baseTitle = "";
   };
 
   return {
@@ -117,6 +110,7 @@ export function createTitleSpinner(runtime: TitleSpinnerRuntime, config: Spinner
       if (running) return;
 
       activeTargetId = targetId;
+      baseTitle = (await runtime.getTitle(targetId)).trim() || "pi";
       running = true;
       frameIndex = 0;
       await startTick();
