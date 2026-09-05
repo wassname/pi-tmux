@@ -13,7 +13,12 @@ tmux status for the [Pi coding agent](https://pi.dev).
 ## Install
 
 ```bash
-pi install npm:pi-tmux
+# Clone this fork, then prepare the package artifact once.
+git clone https://github.com/wassname/pi-agent-status.git
+cd pi-agent-status
+npm ci --ignore-scripts
+npm run sync
+pi install "$(pwd)/packages/pi-tmux"
 ```
 
 It activates only inside tmux (`$TMUX`) and stays inactive elsewhere.

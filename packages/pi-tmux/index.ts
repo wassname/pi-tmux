@@ -118,7 +118,7 @@ export default function piTmuxExtension(pi: ExtensionAPI) {
   });
 
   pi.on("session_info_changed", async (event, ctx) => {
-    if (!isMainAgentSession(ctx) || typeof event.name !== "string") return;
+    if (!isMainAgentSession(ctx)) return;
 
     const name = title.observeSessionName(event.name);
     const fallback = basename(ctx.sessionManager.getCwd()) || "pi";

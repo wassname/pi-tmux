@@ -13,6 +13,7 @@ test("a native Pi name is preserved without the automatic title length limit", (
   });
 
   assert.equal(title.observeSessionName("manual_name_that_is_deliberately_long"), "manual_name_that_is_deliberately_long");
+  assert.equal(title.observeSessionName(undefined), undefined);
 });
 
 test("a native Pi name cancels an in-flight automatic title", async () => {
