@@ -10,6 +10,16 @@ tmux status for the [Pi coding agent](https://pi.dev).
 - **Manual Pi names**: Pi's `/name` updates the tmux window title.
 - **AI-generated work IDs** as window names, such as `fix_oauth_callback`.
 
+## Fork changes
+
+Forked from [yuki-kisaku/pi-agent-status](https://github.com/yuki-kisaku/pi-agent-status/tree/main/packages/pi-tmux) at `1ee9aa7`.
+
+- Automatic names request short work IDs and retain the end of a pasted first prompt.
+- Pi's built-in `/name` updates tmux and takes priority over an in-flight automatic name.
+- Session restart restores the Pi name to tmux.
+- Spinner stops restore the captured base title instead of trying to remove a frame from the current title.
+- Completion sound, global tmux hooks, and the terminal-title stdout patch are disabled by default.
+
 ## Install
 
 ```bash
