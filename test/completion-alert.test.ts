@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createCompletionAlert, type AlertRuntime } from "../completion-alert.ts";
+import { createCompletionAlert, type AlertRuntime } from "../core/completion-alert.ts";
 
 function createFakeRuntime(initialName: string, visible: boolean, appFocused = true) {
   let name = initialName;

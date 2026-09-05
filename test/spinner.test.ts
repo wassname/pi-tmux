@@ -7,7 +7,7 @@ import {
   SPINNER_SPEEDS,
   type NamedTargetRuntime,
   type SimpleTitleRuntime,
-} from "../spinner.ts";
+} from "../core/spinner.ts";
 
 test("named target spinner stop restores the name by removing only its last frame", async () => {
   let name = "Fix oauth callback";

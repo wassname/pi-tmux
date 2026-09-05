@@ -6,7 +6,7 @@ import {
   getTerminalTitle,
   ringTerminalBell,
   stripTitleSuffix,
-} from "../osc-title.ts";
+} from "../core/osc-title.ts";
 
 function captureStdoutWrite(isTTY: boolean, run: () => void): string {
   let written = "";

@@ -1,12 +1,3 @@
 node_modules/
 *.tgz
 *.tsbuildinfo
-
-# Copied from the repository root at publish time.
-packages/*/LICENSE
-
-# Copied from packages/core at build/publish time.
-packages/pi-tmux/core/
-packages/pi-zed-plugin/core/
-packages/pi-orca/core/
-packages/pi-herdr/core/

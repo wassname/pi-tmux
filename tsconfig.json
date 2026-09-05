@@ -10,10 +10,5 @@
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
-  "include": [
-    "packages/*/*.ts",
-    "packages/*/test/*.ts",
-    "packages/*/core/*.ts",
-    "scripts/*.mjs"
-  ]
+  "include": ["*.ts", "core/*.ts", "test/*.ts"]
 }

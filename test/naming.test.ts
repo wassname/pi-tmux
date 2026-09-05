@@ -9,7 +9,7 @@ import {
   normalizeThinkingLevel,
   parseGeneratedTitle,
   sanitizeTitle,
-} from "../naming.ts";
+} from "../core/naming.ts";
 
 const NAMING_CONFIG = { enabled: true, model: "", thinking: "low", maxChars: 32 };
 

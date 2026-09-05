@@ -1,17 +1,52 @@
 {
-  "name": "pi-agent-status-monorepo",
-  "version": "0.1.0",
-  "private": true,
+  "name": "pi-tmux",
+  "version": "0.1.0-wassname.1",
   "type": "module",
-  "description": "Monorepo for Pi agent status extensions (tmux, Zed, Orca, Herdr)",
-  "workspaces": [
-    "packages/*"
+  "description": "tmux window spinner, completion bell mark, and AI-generated session titles for the Pi coding agent",
+  "keywords": [
+    "pi-package",
+    "pi",
+    "pi-coding-agent",
+    "pi-extension",
+    "tmux",
+    "spinner",
+    "notification",
+    "status",
+    "terminal",
+    "ai"
   ],
+  "license": "MIT",
+  "author": "yuki-kisaku",
+  "homepage": "https://github.com/wassname/pi-tmux",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wassname/pi-tmux.git"
+  },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
-    "sync": "node scripts/sync-core.mjs",
-    "check": "node scripts/sync-core.mjs && tsc --build --force",
-    "test": "node scripts/sync-core.mjs && node --test --experimental-strip-types \"packages/*/test/*.test.ts\"",
-    "release": "node scripts/publish.mjs"
+    "check": "tsc --build --force",
+    "test": "node --test --experimental-strip-types \"test/*.test.ts\""
+  },
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "files": [
+    "index.ts",
+    "settings.ts",
+    "session-activity.ts",
+    "tmux-runtime.ts",
+    "core/**/*.ts",
+    "assets/**",
+    "README.md",
+    "LICENSE"
+  ],
+  "peerDependencies": {
+    "@earendil-works/pi-ai": "^0.83.0",
+    "@earendil-works/pi-coding-agent": "^0.83.0"
   },
   "devDependencies": {
     "@earendil-works/pi-ai": "^0.83.0",

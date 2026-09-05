@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createTitleController } from "../title-controller.ts";
+import { createTitleController } from "../core/title-controller.ts";
 
 const NAMING_CONFIG = { enabled: true, model: "", thinking: "low", maxChars: 24 };
 
